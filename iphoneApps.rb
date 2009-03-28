@@ -9,13 +9,16 @@
 require 'rubygems'
 gem 'libxml-ruby', '>= 1.1.3'
 gem 'rubyzip', '>= 0.9.1'
+gem 'rmagick', '>= 2.9.1'
+gem 'sqlite3-ruby', '>= 1.2.4'
 
 require 'pathname'
+require 'optparse'
 require 'zip/zipfilesystem'
 require 'net/http'
 require 'xml'
 require 'sqlite3'
-require 'optparse'
+require 'RMagick'
 
 $plutil="/usr/bin/plutil"
 $mobileAppDir=Pathname.new(ENV['HOME'])+"Music/iTunes/Mobile Applications"
@@ -150,16 +153,46 @@ class ImageParams
 end
 
 class GenerateImage
+    def self.watermark(finalImage)
+    mark = Magick::Image.new(finalImage.columns, finalImage.rows) do
+        self.background_color = 'none'
+        end
+    gc = Magick::Draw.new
+    gc.annotate(mark, 0, 0, 0, 0, "Image by Khivi") do
+        self.gravity = Magick::CenterGravity
+        self.pointsize = 32
+        self.font_family = "TrueColorMatte"
+        self.font_weight = Magick::BoldWeight
+        self.font_style = Magick::ObliqueStyle
+        self.fill = "white"
+        self.stroke = "none"
+        end
+    mark
+    end
+
     def self.generate
         puts "GenerateImage...."
         AppDB.open
         appids=AppDB.appids
+        images=Magick::ImageList.new
         appids.each do |appid|
             icon=AppDB.icon(appid)
             label=AppDB.name(appid)
-            puts "label=#{label} appid=#{appid}"
+            images.from_blob(icon)
+            images.cur_image['Label']= label
+            #puts "label=#{label} appid=#{appid}"
         end
         AppDB.close
+
+        montage=images.montage do 
+            self.title = "Applications on My Phone"
+            self.background_color = "black"
+            self.geometry = "60x60+15+15"
+            self.fill = "white"
+        end
+        raise "Not many images generated"  if montage.length != 1
+        montage = montage.watermark(watermark(montage), 0.35, 0, Magick::CenterGravity)
+        montage.write("apps.png")
     end
 end
 
