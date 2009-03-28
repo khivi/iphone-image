@@ -34,22 +34,11 @@ class AppDB
         @@database.execute("CREATE TABLE IF NOT EXISTS APPS (APPID INTEGER NOT NULL, APPNAME CHAR NOT NULL, COMPANY CHAR NOT NULL, GENRE CHAR NOT NULL, ICON BLOB NOT NULL);")
         @@database.execute("CREATE UNIQUE INDEX IF NOT EXISTS APPID_INDEX ON APPS (APPID);")
         @@database.execute("CREATE INDEX IF NOT EXISTS GENRE_INDEX ON APPS (GENRE);")
-        ## IMAGE
-        @@database.execute("CREATE TABLE IF NOT EXISTS IMAGE_POSITION (APPID INTEGER NOT NULL, X INTEGER NOT NULL, Y CHAR NOT NULL);")
-        @@database.execute("CREATE UNIQUE INDEX IF NOT EXISTS IMAGE_APPID_INDEX ON IMAGE_POSITION (APPID);")
     end
 
     def self.open
         if (@@database == nil)
             @@database=SQLite3::Database.open(@@db)
-        end
-    end
-
-    def self.insert_position(id,x,y)
-        begin
-             @@database.execute("INSERT OR REPLACE INTO IMAGE_POSITION VALUES (?,?,?)",id,x,y)
-        rescue  SQLite3::SQLException => ex
-            raise "#{id} #{ex.message}"
         end
     end
 
@@ -65,13 +54,9 @@ class AppDB
         @@database.get_first_value("SELECT APPNAME FROM APPS WHERE APPID = :appid",:appid => appid)
     end
 
-    def self.position(appid)
-        @@database.get_first_row("SELECT X,Y FROM IMAGE_POSITION WHERE APPID = :appid",:appid => appid)
-    end
-
     def self.appids
         appids = []
-        @@database.execute("SELECT APPID FROM APPS") do |row|
+        @@database.execute("SELECT APPID FROM APPS ORDER BY APPNAME COLLATE NOCASE") do |row|
             appids << row[0]
         end
         appids
@@ -126,31 +111,6 @@ class AppList
      end
 end
 
-class ImageParams
-    @@max=604
-    @@icon=57
-    @@border=3
-    def self.calculate
-        puts "Image Calculation..."
-        AppDB.open
-        count=AppDB.count.to_i
-        if (Math.sqrt(count) * @@icon > @@max)
-            raise "Number of application #{count} cannot fit in image"
-        end
-        appids=AppDB.appids
-        x = @@border+@@icon/2
-        y = @@border+@@icon/2
-        AppDB.count.to_i.times do |i|
-            AppDB.insert_position(appids[i],x,y)
-            x += @@icon+@@border
-            if ((x +@@icon/2+@border) > @@max)
-                x = @@icon/2
-                y += @@icon+@@border
-            end
-        end
-        AppDB.close
-    end
-end
 
 class GenerateImage
     def self.watermark(finalImage)
@@ -180,14 +140,14 @@ class GenerateImage
             label=AppDB.name(appid)
             images.from_blob(icon)
             images.cur_image['Label']= label
-            #puts "label=#{label} appid=#{appid}"
+            puts "label=#{label} appid=#{appid}"
         end
         AppDB.close
 
         montage=images.montage do 
             self.title = "Applications on My Phone"
             self.background_color = "black"
-            self.geometry = "60x60+15+15"
+            self.geometry = "57x57+15+15"
             self.fill = "white"
         end
         raise "Not many images generated"  if montage.length != 1
@@ -203,9 +163,6 @@ OptionParser.new do |opts|
     opts.on("-l","--list-apps","Obtain list of applications") do |v|
         options[:list]=v
     end
-    opts.on("-c","--calculate-image","Calculate image parameters ") do |v|
-        options[:calculate]=v
-    end
     opts.on("-g","--gen-image","Generate image ") do |v|
         options[:image]=v
     end
@@ -213,9 +170,6 @@ end.parse!
 
 if (options[:list])
     AppList.getApps
-end
-if (options[:calculate])
-    ImageParams.calculate
 end
 if (options[:image])
     GenerateImage.generate
