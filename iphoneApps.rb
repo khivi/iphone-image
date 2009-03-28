@@ -130,6 +130,21 @@ class GenerateImage
     mark
     end
 
+    def self.roundedge(image)
+
+        mask=Magick::Image.new(image.columns,image.rows) {self.background_color='black'}
+        gc=Magick::Draw.new
+        gc.stroke('white').fill('white')
+        gc.opacity('100%')
+        gc.roundrectangle(0,0,image.columns,image.rows,9,9)
+        gc.draw(mask)
+
+        mask.matte=false
+        image.matte= true
+
+        image.composite(mask,Magick::CenterGravity, Magick::CopyOpacityCompositeOp)
+    end
+
     def self.generate
         puts "GenerateImage...."
         AppDB.open
@@ -138,9 +153,10 @@ class GenerateImage
         appids.each do |appid|
             icon=AppDB.icon(appid)
             label=AppDB.name(appid)
-            images.from_blob(icon)
+            #images.from_blob(icon)
+            images << self.roundedge(Magick::Image.from_blob(icon)[0])
             images.cur_image['Label']= label
-            puts "label=#{label} appid=#{appid}"
+            #puts "label=#{label} appid=#{appid}"
         end
         AppDB.close
 
@@ -151,7 +167,7 @@ class GenerateImage
             self.fill = "white"
         end
         raise "Not many images generated"  if montage.length != 1
-        montage = montage.watermark(watermark(montage), 0.35, 0, Magick::CenterGravity)
+        montage = montage.watermark(self.watermark(montage), 0.45, 0, Magick::CenterGravity)
         montage.write("apps.png")
     end
 end
