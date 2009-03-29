@@ -124,7 +124,7 @@ class GenerateImage
         self.font_family = "TrueColorMatte"
         self.font_weight = Magick::BoldWeight
         self.font_style = Magick::ObliqueStyle
-        self.fill = "black"
+        self.fill = "white"
         self.stroke = "none"
         end
     mark
