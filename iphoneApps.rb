@@ -124,7 +124,7 @@ class GenerateImage
         self.font_family = "TrueColorMatte"
         self.font_weight = Magick::BoldWeight
         self.font_style = Magick::ObliqueStyle
-        self.fill = "white"
+        self.fill = "black"
         self.stroke = "none"
         end
     mark
@@ -136,7 +136,7 @@ class GenerateImage
         gc=Magick::Draw.new
         gc.stroke('white').fill('white')
         gc.opacity('100%')
-        gc.roundrectangle(0,0,image.columns,image.rows,9,9)
+        gc.roundrectangle(0,0,image.columns,image.rows,12,12)
         gc.draw(mask)
 
         mask.matte=false
@@ -152,7 +152,7 @@ class GenerateImage
         images=Magick::ImageList.new
         appids.each do |appid|
             icon=AppDB.icon(appid)
-            label=AppDB.name(appid)
+            label=AppDB.name(appid).slice!(0,11)
             #images.from_blob(icon)
             images << self.roundedge(Magick::Image.from_blob(icon)[0])
             images.cur_image['Label']= label
