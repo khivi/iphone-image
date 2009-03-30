@@ -48,10 +48,9 @@ class AppDB
         self.close
         File.delete @@db  rescue nil
         @@database=SQLite3::Database.open(@@db)
-        ## APP
+        ## APPS
         @@database.execute("CREATE TABLE IF NOT EXISTS APPS (APPID INTEGER NOT NULL, APPNAME CHAR NOT NULL, COMPANY CHAR NOT NULL, GENRE CHAR NOT NULL, ICON BLOB NOT NULL);")
         @@database.execute("CREATE UNIQUE INDEX IF NOT EXISTS APPID_INDEX ON APPS (APPID);")
-        @@database.execute("CREATE INDEX IF NOT EXISTS GENRE_INDEX ON APPS (GENRE);")
     end
 
     def self.open
@@ -154,7 +153,6 @@ class GenerateImage
         gc.fill("rgba(0,0,0,0.45)")
         gc.circle(image.columns/2,-image.rows,image.columns/2,image.rows/2)
         gc.draw(glass)
-
         image.composite(glass,Magick::CenterGravity, Magick::SoftLightCompositeOp)
     end
 
@@ -162,13 +160,10 @@ class GenerateImage
         mask=Magick::Image.new(image.columns,image.rows) {self.background_color='black'}
         gc=Magick::Draw.new
         gc.fill('white')
-        #gc.opacity('100%')
         gc.roundrectangle(0,0,image.columns,image.rows,12,12)
         gc.draw(mask)
-
         mask.matte=false
         image.matte= true
-
         image.composite(mask,Magick::CenterGravity, Magick::CopyOpacityCompositeOp)
     end
 
@@ -180,10 +175,8 @@ class GenerateImage
         appids.each do |appid|
             icon=AppDB.icon(appid)
             label=AppDB.name(appid).slice!(0,13)
-            #images.from_blob(icon)
             images << self.roundedge(self.glass_effect(Magick::Image.from_blob(icon)[0]))
             images.cur_image['Label']= label
-            #puts "label=#{label} appid=#{appid}"
         end
         AppDB.close
 
@@ -195,7 +188,7 @@ class GenerateImage
             self.pointsize = 10
             self.shadow = true
         end
-        raise "Not many images generated"  if montage.length != 1
+        raise "Too many images generated"  if montage.length != 1
         montage = montage.watermark(self.watermark(montage), 0.35, 0, Magick::CenterGravity)
         montage.write("apps.png")
     end
