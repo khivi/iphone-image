@@ -175,6 +175,7 @@ class GenerateImage
             self.geometry = "57x57+15+15"
             self.fill = "white"
             self.pointsize = 10
+            self.shadow = true
         end
         raise "Not many images generated"  if montage.length != 1
         montage = montage.watermark(self.watermark(montage), 0.35, 0, Magick::CenterGravity)
