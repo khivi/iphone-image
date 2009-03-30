@@ -161,7 +161,7 @@ class GenerateImage
         images=Magick::ImageList.new
         appids.each do |appid|
             icon=AppDB.icon(appid)
-            label=AppDB.name(appid).slice!(0,12)
+            label=AppDB.name(appid).slice!(0,13)
             #images.from_blob(icon)
             images << self.roundedge(self.glass_effect(Magick::Image.from_blob(icon)[0]))
             images.cur_image['Label']= label
@@ -174,6 +174,7 @@ class GenerateImage
             self.background_color = "black"
             self.geometry = "57x57+15+15"
             self.fill = "white"
+            self.pointsize = 10
         end
         raise "Not many images generated"  if montage.length != 1
         montage = montage.watermark(self.watermark(montage), 0.35, 0, Magick::CenterGravity)
