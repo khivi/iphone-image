@@ -130,12 +130,21 @@ class GenerateImage
     mark
     end
 
-    def self.roundedge(image)
+    def self.glass_effect(image)
+        glass=Magick::Image.new(image.columns,image.rows) {self.background_color='none'}
+        gc=Magick::Draw.new
+        gc.fill("rgba(0,0,0,0.45)")
+        gc.circle(image.columns/2,-image.rows,image.columns/2,image.rows/2)
+        gc.draw(glass)
 
+        image.composite(glass,Magick::CenterGravity, Magick::SoftLightCompositeOp)
+    end
+
+    def self.roundedge(image)
         mask=Magick::Image.new(image.columns,image.rows) {self.background_color='black'}
         gc=Magick::Draw.new
-        gc.stroke('white').fill('white')
-        gc.opacity('100%')
+        gc.fill('white')
+        #gc.opacity('100%')
         gc.roundrectangle(0,0,image.columns,image.rows,12,12)
         gc.draw(mask)
 
@@ -154,7 +163,7 @@ class GenerateImage
             icon=AppDB.icon(appid)
             label=AppDB.name(appid).slice!(0,12)
             #images.from_blob(icon)
-            images << self.roundedge(Magick::Image.from_blob(icon)[0])
+            images << self.roundedge(self.glass_effect(Magick::Image.from_blob(icon)[0]))
             images.cur_image['Label']= label
             #puts "label=#{label} appid=#{appid}"
         end
