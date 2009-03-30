@@ -176,7 +176,7 @@ class GenerateImage
             self.fill = "white"
         end
         raise "Not many images generated"  if montage.length != 1
-        montage = montage.watermark(self.watermark(montage), 0.25, 0, Magick::CenterGravity)
+        montage = montage.watermark(self.watermark(montage), 0.35, 0, Magick::CenterGravity)
         montage.write("apps.png")
     end
 end
