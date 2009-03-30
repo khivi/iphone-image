@@ -120,11 +120,11 @@ class GenerateImage
     gc = Magick::Draw.new
     gc.annotate(mark, 0, 0, 0, 0, "Image by Khivi") do
         self.gravity = Magick::CenterGravity
-        self.pointsize = 32
+        self.pointsize = 64
         self.font_family = "TrueColorMatte"
         self.font_weight = Magick::BoldWeight
         self.font_style = Magick::ObliqueStyle
-        self.fill = "white"
+        self.fill = "grey"
         self.stroke = "none"
         end
     mark
@@ -152,7 +152,7 @@ class GenerateImage
         images=Magick::ImageList.new
         appids.each do |appid|
             icon=AppDB.icon(appid)
-            label=AppDB.name(appid).slice!(0,11)
+            label=AppDB.name(appid).slice!(0,12)
             #images.from_blob(icon)
             images << self.roundedge(Magick::Image.from_blob(icon)[0])
             images.cur_image['Label']= label
@@ -161,13 +161,13 @@ class GenerateImage
         AppDB.close
 
         montage=images.montage do 
-            self.title = "Applications on My Phone"
+            self.title = "Applications on my iPhone"
             self.background_color = "black"
             self.geometry = "57x57+15+15"
             self.fill = "white"
         end
         raise "Not many images generated"  if montage.length != 1
-        montage = montage.watermark(self.watermark(montage), 0.45, 0, Magick::CenterGravity)
+        montage = montage.watermark(self.watermark(montage), 0.25, 0, Magick::CenterGravity)
         montage.write("apps.png")
     end
 end
