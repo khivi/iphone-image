@@ -107,22 +107,25 @@ class AppList
         puts "Get Applications..."
         AppDB.create
         Pathname.glob($mobileAppDir+"*.ipa").each do |appIpa|
-            tmpfile=Tempfile.new("iphoneApps")
-            tmpfile.write(Zip::ZipFile.open(appIpa).read("iTunesMetadata.plist"))
-            tmpfile.flush
-            IO.popen("#{$plutil} -convert xml1 -o - #{tmpfile.path}") do |plist|
-                doc = XML::Document.io(plist)
-                #price=get_value_for_key(doc,"priceDisplay",:string)
-                appId=get_value_for_key(doc,"itemId",:integer)
-                appName=get_value_for_key(doc,"playlistName",:string)
-                company=get_value_for_key(doc,"playlistArtistName",:string)
-                genre=get_value_for_key(doc,"genre",:string)
-                iconUrl=get_value_for_key(doc,"softwareIcon57x57URL",:string)
-                icon = Net::HTTP.get(URI.parse(iconUrl))
-                AppDB.insert_app(appId,appName,company,genre,icon)
-                puts "#{appId}|#{appName}|#{company}|#{genre}"
+            puts appIpa
+            Zip::ZipFile.open(appIpa) do |appFile|
+                tmpfile=Tempfile.new("iphoneApps")
+                tmpfile.write(appFile.read("iTunesMetadata.plist"))
+                tmpfile.flush
+                IO.popen("#{$plutil} -convert xml1 -o - #{tmpfile.path}") do |plist|
+                    doc = XML::Document.io(plist)
+                    #price=get_value_for_key(doc,"priceDisplay",:string)
+                    appId=get_value_for_key(doc,"itemId",:integer)
+                    appName=get_value_for_key(doc,"playlistName",:string)
+                    company=get_value_for_key(doc,"playlistArtistName",:string)
+                    genre=get_value_for_key(doc,"genre",:string)
+                    iconUrl=get_value_for_key(doc,"softwareIcon57x57URL",:string)
+                    icon = Net::HTTP.get(URI.parse(iconUrl))
+                    AppDB.insert_app(appId,appName,company,genre,icon)
+                    puts "#{appId}|#{appName}|#{company}|#{genre}"
+                end
+                tmpfile.close()
             end
-            tmpfile.close()
         end
         AppDB.close
      end
