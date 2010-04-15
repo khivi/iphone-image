@@ -178,7 +178,8 @@ class GenerateImage
         appids.each do |appid|
             icon=AppDB.icon(appid)
             label=AppDB.name(appid).slice!(0,13)
-            images << self.roundedge(self.glass_effect(Magick::Image.from_blob(icon)[0]))
+            images <<
+            self.roundedge(self.glass_effect(Magick::Image.from_blob(icon)[0])).adaptive_threshold(3,3,256)
             images.cur_image['Label']= label
         end
         AppDB.close
