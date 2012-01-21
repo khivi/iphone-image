@@ -81,7 +81,7 @@ class AppDB
 
     def self.insert_app(id,name,company,genre,icon)
         begin
-             @@database.execute("INSERT OR REPLACE INTO APPS VALUES (?,?,?,?,?)",id,name,company,genre,SQLite3::Blob.new(icon))
+             @@database.execute("INSERT OR REPLACE INTO APPS VALUES (?,?,?,?,?)",[id,name,company,genre,SQLite3::Blob.new(icon)])
         rescue  SQLite3::SQLException => ex
             puts "ERR:#{id}"
             puts "#{ex.message}"
@@ -107,7 +107,6 @@ class AppList
         puts "Get Applications..."
         AppDB.create
         Pathname.glob($mobileAppDir+"*.ipa").each do |appIpa|
-            puts appIpa
             Zip::ZipFile.open(appIpa) do |appFile|
                 tmpfile=Tempfile.new("iphoneApps")
                 tmpfile.write(appFile.read("iTunesMetadata.plist"))
